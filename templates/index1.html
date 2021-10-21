@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   crossorigin=""></script>
+
+
+
+	<script src="https://khalti.s3.ap-south-1.amazonaws.com/KPG/dist/2020.12.17.0.0.0/khalti-checkout.iffe.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>ssa</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+   
+</head>
+
+<body style="background: url(&quot;/static/login/assets/img/we.jpg&quot;);"><style>
+.overlay{
+     background-color: rgba(0,0,0,0.63); 
+  
+    position:fixed;
+    
+    width:100%;
+    height:100%;
+    top:0px;
+    left:0px;
+    z-index:100;
+        display:none;
+}
+.popup{
+	position:fixed;
+	top:0px;
+    left:0px;
+	height:100%;
+	width:100%;
+	z-index:101;
+	display:none;
+
+}
+
+</style>
+      <div id="pop_up" class="overlay" style="display: none;" >
+      </div>
+    <div id="pop_up_rent" class="popup" style="z-index:101;">
+        <div style="text-align: right;padding: 13px;background: #ffffff;border-top-left-radius: 34px;border-top-right-radius: 34px;"><button onclick="close_popup('pop_up_rent')"class="btn btn-primary" type="button" style="font-size: 22px;width: 59.1562px;background: var(--bs-red);"><i class="fa fa-remove"></i></button></div>
+        <div style="text-align: center;padding: 40px;background:rgba(255,255,255,0.8);border-bottom-right-radius: 13px;border-bottom-left-radius: 13px;">
+            <h2>Start Time:&nbsp;<input id="start_time" type="time"></h2>
+            <h2>End Time:&nbsp; &nbsp;<input id="end_time"type="time"></h2>
+            <h4>Date:&nbsp; &nbsp;<input id="date" type="date" style="width: 199.234px;"></h4><button onclick="rent()"class="btn btn-primary" type="button">Rent</button>
+        </div>
+    </div>
+     <div id="pop_up_map" class="popup" style="z-index:101;">
+        <div style="text-align: right;padding: 13px;background: #ffffff;border-top-left-radius: 34px;border-top-right-radius: 34px;"><button onclick="close_popup('pop_up_map',clear_db)"class="btn btn-primary" type="button" style="font-size: 22px;width: 59.1562px;background: var(--bs-red);"><i class="fa fa-remove"></i></button></div>
+        <div id="mapid" style=" height: 100%;background:rgba(255,255,255,0.8);">
+            
+        </div>
+    </div>
+
+     <div id="pop_up_qr" class="popup" style="z-index:101;">
+        <div style="text-align: right;padding: 13px;background: #ffffff;border-top-left-radius: 34px;border-top-right-radius: 34px;"><button onclick="close_popup('pop_up_qr',clear_db)"class="btn btn-primary" type="button" style="font-size: 22px;width: 59.1562px;background: var(--bs-red);"><i class="fa fa-remove"></i></button></div>
+        <h2 id="qr_title"style="text-align: center;background: #000000;font-weight: bold;color: rgb(255,255,255);">code: </h2>
+        <div id="qrid" style=" text-align: center;  padding-bottom:40px; padding-left:40%;padding-top:40px;;background:rgba(255,255,255,0.8);">
+            
+        </div>
+    </div>
+
+
+
+
+    <div style="background: rgba(255,255,255,0.3);padding: 12px;text-align: center;">
+    <h1 id="Title">Fut-4-All!</h1>
+	</div>
+
+  
+    <script src="/static/js/qrcode.js" defer></script>
+    
+ 
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+    var RENT_DATA=null;
+    var RADIUS=0;
+    var QR;//new QRCode(document.getElementById("qrid"))
+
+    
+
+    var CONFIG={
+            // replace the publicKey with yours
+            "publicKey": "test_public_key_e200f97fb82949249e1556e224fb0ace",
+            "productIdentity": "1234567890",
+            "productName": "Rent",
+            "productUrl": "http://gameofthrones.wikia.com/wiki/Dragons",
+            "paymentPreference": [
+                "KHALTI",
+                "EBANKING",
+                "MOBILE_BANKING",
+                "CONNECT_IPS",
+                "SCT",
+                ],
+            "eventHandler": {
+                onSuccess (payload) {
+                    // hit merchant api for initiating verfication
+                    postData("/payment",payload).then(function(res)
+                    {
+                        if(res.status==200){
+                            let data=res.data;
+                            close_popup("pop_up_rent")
+                            open_popup("pop_up_qr")
+                            document.getElementById("qr_title").innerHTML="Code:"+data.token;
+                            QR.makeCode(data.token);
+                            //alert(data.token);
+                        };
+                        alert("error")
+                    })
+                },
+                onError (error) {
+                    close_popup("pop_up_rent");
+                    console.log(error);
+                },
+                onClose () {
+                    console.log('widget is closing');
+                }
+            }
+        };
+    async function postData(url = '', data={} ) {
+		  // Default options are marked with *
+		  const response = await fetch(url, {
+		    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+		    mode: 'cors', // no-cors, *cors, same-origin
+		    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+		    credentials: 'same-origin', // include, *same-origin, omit
+		    headers: {
+		      'Content-Type': 'application/json'
+		      // 'Content-Type': 'application/x-www-form-urlencoded',
+		    },
+		    redirect: 'follow', // manual, *follow, error
+		    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+		    body: JSON.stringify(data) // body data type must match "Content-Type" header
+		  });
+          let d={};
+          try{
+            d.data=await response.text();
+            d.data=JSON.parse(d.data);
+          }catch(err){
+            d.type="text";
+          }
+            d.status=response.status
+		  return d; // parses JSON response into native JavaScript objects
+	}
+
+    const  Iteams=function(){
+				//name,open_time,close_time,lat,lan,id,
+		this.html=`<div style="background: rgba(255,255,255,0.63);padding: 12px;margin: 17px;color: var(--gray-dark);border-radius: 30px;">
+    <h1>{name}</h1>
+    <h2>Location: {lat},{lan}    <button class="btn btn-primary" type="button" style="background: rgb(0,123,255);font-size: 29px;color: var(--light);border-radius: 14px;" onclick="viewMap({lat},{lan})"><i class="fas fa-map-marked"></i></button></h2>
+    <h2>Open Time:{open_time}</h2>
+    <h2>Close Time:{close_time}</h2><button onclick="open_popup('pop_up_rent',function(){RENT_DATA={_id:{id}}})"class="btn btn-primary" type="button" style="font-weight: bold;font-size: 21px;color: var(--light);background: var(--purple);margin: 6px;width: 86.6719px;">Rent</button>
+</div>`;
+		this.set=function(name,lat,lan,otime,ctime){
+			console.log(name)
+			this.html=this.html.replace("{name}",name);
+			this.html=this.html.replaceAll("{lat}",lat);
+			this.html=this.html.replaceAll("{lan}",lan);
+			this.html=this.html.replace("{open_time}",otime);
+			this.html=this.html.replace("{close_time}",ctime);
+
+		};
+
+		this.print=function(id){
+			div=document.createElement("div"); 
+			div.id=id
+			this.html=this.html.replace("{id}",id)
+			div.innerHTML=this.html;
+			document.body.appendChild(div);
+		}
+
+	}
+
+
+
+    	const close_popup=function(str,callback=null){
+    		
+    		document.getElementById("pop_up").style.display="none";
+    		document.getElementById(str).style.display="none";
+    		if(callback)callback();
+    	}
+    	const open_popup=function(str,callback=null){
+    	
+    		document.getElementById("pop_up").style.display="block";
+    		document.getElementById(str).style.display="block";
+    		if(callback)callback();
+
+    	}
+
+    	window.onload=function(){
+            QR=new QRCode(document.getElementById("qrid"))
+    		if (navigator.geolocation) {
+    		navigator.geolocation.getCurrentPosition(showLocation);
+            //play loading
+
+	  		} else { 
+	    		alert("Geolocation is not supported by this browser.");
+	  		}
+  		}
+
+  		const rent=function(){
+  			temp=document.getElementById("start_time").value.split(":");
+            RENT_DATA.start_time=[Number(temp[0]),Number(temp[1])];
+  			temp=document.getElementById("end_time").value.split(":");
+            RENT_DATA.end_time=[Number(temp[0]),Number(temp[1])];
+  			temp=document.getElementById("date").value.split("-");
+            RENT_DATA.date=[Number(temp[0]),Number(temp[1]),Number(temp[1])]
+  			postData("/rent",RENT_DATA).then(function(res){
+  				if(res.status==200){
+  					CONFIG.amount=res.data.amount*100
+                    CONFIG.productIdentity=RENT_DATA._id;
+  					var checkout = new KhaltiCheckout(CONFIG)
+  					checkout.show({amount:res.data.amount*100})
+  				}
+  			})
+
+  		}
+
+  		function showLocation(pos){
+  			fetch("/get/"+pos.coords.latitude+"/"+pos.coords.longitude+"/"+RADIUS).then(async function(res){
+  				if(res.status==200){
+  					let data=await res.json();
+  					for(let i of data){
+  						console.log(i.name)
+  						d=new Iteams()
+  						d.set(i.name,i.lat,i.lan,i.open_time,i.close_time);
+  						d.print(i._id)
+  					}
+
+  				}else{
+  					alert("err");
+  				}
+
+  			})
+
+  		}
+
+        /*const viewMap=function(lat,lan){
+            open_popup("pop_up_map");
+            marker=L.marker([lat,lan],).addTo(MAP)
+            MAP.setView([lat,lan],13)
+
+            console.log("map")
+        }*/
+
+
+    </script>
+
+    <script>
+    var MAP = L.map('mapid').setView([0, 0], 1);
+    const attribution ='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const tiles = L.tileLayer(tileUrl, { attribution });
+    
+    tiles.addTo(MAP);
+    var MAP_DB={markers:[]};
+    const clear_db=function () {
+        for(i of MAP_DB.markers){
+            i.remove();
+        }
+    }
+    const viewMap=function(lat,lan){
+            open_popup("pop_up_map");
+            marker=L.marker([lat,lan],).addTo(MAP)
+            MAP.setView([lat,lan],13)
+            MAP_DB.markers.push(marker);
+            console.log("map")
+        }
+
+
+
+
+    </script>
+</body>
+
+</html>

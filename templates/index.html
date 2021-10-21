@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   crossorigin=""></script>
+
+	<style>
+	    body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #mapid {
+            height: 100%;
+            width: 100%;
+        }
+	
+	</style>
+
+	<meta charset="utf-8">
+	<title></title>
+</head>
+
+<body>
+<div id="mapid"></div>
+
+
+
+
+<script>
+	window.onload=function(){
+		if (navigator.geolocation) {
+    		navigator.geolocation.getCurrentPosition(showLocation);
+            //play loading
+
+  		} else { 
+    		alert("Geolocation is not supported by this browser.");
+  		}
+	}
+	var mymap = L.map('mapid').setView([0, 0], 1);
+	const attribution ='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const tiles = L.tileLayer(tileUrl, { attribution });
+    
+    tiles.addTo(mymap);
+    var radius=0;
+    var CIRCLE=null;
+    function showLocation(pos){
+    	var marker = L.marker([pos.coords.latitude ,pos.coords.longitude ]).addTo(mymap);
+        marker.on("click",function(){
+            alert("sup")
+        })
+        
+    	mymap.setView([pos.coords.latitude,pos.coords.longitude],13)
+        mymap.setMinZoom(13);
+        
+       // mymap.setMaxZoom(41)
+         
+    	console.log(pos.coords.latitude+" "+ pos.coords.longitude);
+
+        fetch("/get/"+pos.coords.latitude+"/"+pos.coords.longitude+"/"+radius).then(async function(res){
+            if(res.status==200){
+                let data=await res.json()
+                console.log(data);
+               
+                for(let i of data){
+                    console.log("[*]"+i.name)
+                    let j=L.marker([i.lat,i.lan]).addTo(mymap);
+                    //REGISTER TO DATABASE;
+                    j.on("click",function(){
+                        let name=i.name
+                        alert(name);
+                    })
+
+
+                }
+                i=data[1];
+                radius++;
+               let dis=Math.pow(Math.pow(pos.coords.latitude-i.lat,2)+Math.pow(pos.coords.longitude-i.lan,2),2)
+               console.log(dis);
+               if(CIRCLE!=null){
+                    CIRCLE.remove();
+               }
+                CIRCLE=L.circle([pos.coords.latitude,pos.coords.longitude],dis).addTo(mymap)
+            }else{
+                alert("Error");
+            }
+        })
+       
+    }
+
+
+</script>
+
+<script type="text/javascript">
+        
+</script>
+
+</body>
+</html>

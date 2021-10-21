@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no"><title>futsal</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css"><link rel="stylesheet" href="/static/login/assets/css/styles.min.css"></head><body style="background: url(&quot;/static/login/assets/img/we.jpg&quot;);"><section class="login-clean" style="background: rgba(241,247,252,0);"><form method="post" style="background: rgba(255,255,255,0.46);"><h2 class="sr-only">Login Form</h2><div class="illustration"><i class="icon ion-ios-football" style="color: rgb(2,125,0);"></i></div><div class="form-group"><input class="form-control" id="uid" type="text" name="email" placeholder="Email" style="color: rgb(0,0,0);text-align: center;border-radius: 26px;"></div><div class="form-group"><input class="form-control" id="pass"type="password" name="password" placeholder="Password" style="color: rgb(0,0,0);font-size: 16px;text-align: center;border-radius: 36px;"></div><div class="form-group"><button id="btn" class="btn btn-primary btn-block" type="submit" style="background: rgb(15,136,20);">Log In</button></div><a id="error" class="forgot" style="display: none;color: red;font-size: 20px;"href="#">**Wrong emial/password**</a></form></section><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+	async function postData(url = '', data={} ) {
+		  // Default options are marked with *
+		  const response = await fetch(url, {
+		    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+		    mode: 'cors', // no-cors, *cors, same-origin
+		    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+		    credentials: 'same-origin', // include, *same-origin, omit
+		    headers: {
+		      'Content-Type': 'application/json'
+		      // 'Content-Type': 'application/x-www-form-urlencoded',
+		    },
+		    redirect: 'follow', // manual, *follow, error
+		    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+		    body: JSON.stringify(data) // body data type must match "Content-Type" header
+		  });
+		  return {status:response.status,data:response.json()}; // parses JSON response into native JavaScript objects
+	}
+
+
+
+	document.getElementById('btn').onclick=function(e){
+		e.preventDefault();
+		let d={};
+		d.uid=document.getElementById("uid").value;
+		d.pass=document.getElementById("pass").value;
+	
+		postData('/login',d)
+		  .then(res => {
+		  	if(res.status==200){
+		  		document.location.reload();
+		  	}else{
+		  		document.getElementById("error").style.display="block";
+		  	}
+		    //console.log(res.data); // JSON data parsed by `data.json()` call
+		  });
+
+	}
+</script>
+
+</body>
+
+</html>

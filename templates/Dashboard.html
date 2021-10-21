@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Futsal-admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css">
+</head>
+
+
+<body style="background: url(&quot;/static/login/assets/img/we.jpg&quot;);">
+
+	<div style="background: rgba(255,255,255,0.3);padding: 12px;">
+    <h1 id="Title">Welcome Admin!</h1>
+        <div style="text-align: center;">
+            <h4>Name:&nbsp;&nbsp;<input id="name" type="text" style="border-radius: 11px;"></h4>
+            <h4>OpenTime:&nbsp;&nbsp;<input id="open_time"type="time" style="border-radius: 11px;"></h4>
+            <h4>CloseTime:&nbsp;&nbsp;<input id="close_time" type="time" style="border-radius: 11px;"></h4>
+            <h4>Location:&nbsp;<input id="lat" type="text" style="width: 83px;height: 30px;margin: 8px;border-radius: 11px;">,&nbsp;<input type="text" id="lan" style="width: 83px;height: 30px;border-radius: 9px;">&nbsp;<button class="btn btn-primary" id="idkwtf" type="button" style="background: rgb(0,123,255);font-size: 19px;color: var(--light);border-radius: 14px;" ><i class="fas fa-map-marked"></i></button></h4>
+        </div>
+    <div style="text-align: center;"><button class="btn btn-primary" id="add-entry" type="button" style="background: var(--success);color: rgb(255,255,255);font-size: 22px;text-align: center;border-radius: 18px;width: 139.609px;height: 50px;box-shadow: 0px 0px;">Add Entry</button></div>
+	</div>
+<!--
+	INsert<br>
+	Name:<input type="text" id="name"></input><br>
+	lat:<input type="text" id="lat"></input><br>
+	lan:<input type="text" id="lan"></input><br>
+	open_time:<input type="time" id="open_time"></input><br>
+	close_time:<input type="time" id="close_time"></input><br>
+
+
+	<button id="btn">Submit</button><br>
+	<button id="btn_1">GET_data</button><br>
+-->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+	async function postData(url = '', data={} ) {
+		  // Default options are marked with *
+		  const response = await fetch(url, {
+		    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+		    mode: 'cors', // no-cors, *cors, same-origin
+		    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+		    credentials: 'same-origin', // include, *same-origin, omit
+		    headers: {
+		      'Content-Type': 'application/json'
+		      // 'Content-Type': 'application/x-www-form-urlencoded',
+		    },
+		    redirect: 'follow', // manual, *follow, error
+		    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+		    body: JSON.stringify(data) // body data type must match "Content-Type" header
+		  });
+		  return {status:response.status,data:await response.json()}; // parses JSON response into native JavaScript objects
+	}
+
+	
+	const  Iteams=function(){
+				//name,open_time,close_time,lat,lan,id,
+		this.html=`<div style="background: rgba(255,255,255,0.63);padding: 12px;margin: 17px;color: var(--gray-dark);">
+    <h1>{name}</h1>
+    <h2>Location: {lat},{lan}    <button class="btn btn-primary" type="button" style="background: rgb(0,123,255);font-size: 29px;color: var(--light);border-radius: 14px;" onclick="viewMap({lat},{lan})"><i class="fas fa-map-marked"></i></button></h2>
+    <h2>Open Time:{open_time}</h2>
+    <h2>Close Time:{close_time}</h2>
+    <div style="text-align: right;"><button class="btn btn-primary" type="button" style="margin: 6px;font-size: 28px;background: rgba(0,123,255,0);color: var(--red);"><i class="fas fa-trash" onclick="del({id})"></i></button></div>
+</div>`;
+		this.set=function(name,lat,lan,otime,ctime){
+			console.log(name)
+			this.html=this.html.replace("{name}",name);
+			this.html=this.html.replaceAll("{lat}",lat);
+			this.html=this.html.replaceAll("{lan}",lan);
+			this.html=this.html.replace("{open_time}",otime);
+			this.html=this.html.replace("{close_time}",ctime);
+
+		};
+
+		this.print=function(id){
+			div=document.createElement("div"); 
+			div.id=id
+			this.html=this.html.replace("{id}",id)
+			div.innerHTML=this.html;
+			document.body.appendChild(div);
+		}
+
+	}
+
+	var MARKERS=[];
+
+	window.onload=function(){
+		fetch("/dashboard/get").then(async function(res){
+			if(res.status==200){
+				let d=await res.json();
+				for(let i of d){
+					item=new Iteams();
+					item.set(i.name,i.lat,i.lan,i.open_time,i.close_time)
+					item.print(i._id)
+
+				}
+				alert("Sucess");
+			}else{
+				alert("error")
+			}
+		})
+	}
+
+
+
+	document.getElementById('add-entry').onclick=function(){
+		let d={};
+		d.name=document.getElementById("name").value;
+		d.lat=document.getElementById("lat").value;
+		d.lan=document.getElementById("lan").value
+		temp=document.getElementById("open_time").value.split(":")
+		d.open_time=[Number(temp[0]),Number(temp[1])]
+		temp=document.getElementById("close_time").value.split(":")
+		d.close_time=[Number(temp[0]),Number(temp[1])]
+
+
+		postData('/dashboard/insert',d)
+		  .then(res => {
+		  	if(res.status==200){
+		  		let data=res.data
+		  		console.log(data)
+		  		alert("sucess")
+		  		a=new Iteams()
+		  		a.set(d.name,d.lat,d.lan,d.open_time,d.close_time)
+		  		a.print(data._id)
+
+		  	}else{
+		  		alert("failur")
+		  	}
+		    console.log(res.data); // JSON data parsed by `data.json()` call
+		  });
+
+	}
+
+	const showMap=function(lat,lan){
+		document.getElementById("popup-map").style.display="block";
+		marker=L.marker([lat ,lan ]).addTo(mymap);
+    	mymap.setView([lat,lan],40)
+	}
+
+	const del=function(id){
+		postData("/dashboard/del",{"id":id}).then(function(res){
+
+			if(res.status==200){
+				alert("deleted");
+				document.getElementById(id).remove();
+			}else{
+				alert("error");
+			}
+		})
+	}
+
+	document.getElementById("idkwtf").onclick=function(){
+		navigator.geolocation.getCurrentPosition(function(pos){
+			document.getElementById("lat").value=pos.coords.latitude
+			document.getElementById("lan").value=pos.coords.longitude
+		});
+	}
+
+</script>
+</body>
+</html>
